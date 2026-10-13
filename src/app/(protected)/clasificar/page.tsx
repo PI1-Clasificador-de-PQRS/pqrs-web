@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { ComingSoon } from "@/components/coming-soon";
+import { ClassifyView } from "./components/classify-view";
 
 export const metadata: Metadata = { title: "Clasificar · Clasificador de PQRS" };
 
 export default function ClassifyPage() {
-  return <ComingSoon title="Clasificar" />;
+  return <ClassifyView />;
 }
