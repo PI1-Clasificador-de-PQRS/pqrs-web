@@ -3,3 +3,5 @@ node_modules
 pnpm-lock.yaml
 openapi/openapi.json
 coverage
+playwright-report
+test-results

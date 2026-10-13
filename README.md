@@ -4,11 +4,20 @@ Dashboard del MVP del Clasificador automático de PQRS (Proyecto Integrador I, U
 Antioquia). Es una aplicación Next.js (App Router) que habla con `pqrs-api` **solo** a través de
 un proxy BFF del lado del servidor: el navegador nunca maneja credenciales.
 
-Páginas de esta etapa:
+Páginas:
 
-- **Inicio y cierre de sesión.**
-- **Clasificar:** un texto o un lote CSV de hasta 500 filas.
-- **Métricas** e **Historial** llegan en la parte 2 de E3.
+- **Inicio y cierre de sesión.** Tras el login se llega a Métricas.
+- **Métricas** (`/metricas`): total, categoría más frecuente, porcentaje por motor, gráficos por
+  categoría, por día o semana, por motor y por origen (cada uno con «Ver como tabla»), y la
+  evaluación F1-macro de los motores. Período: últimos 7 o 30 días, este mes, todo el historial
+  o un rango personalizado.
+- **Historial** (`/historial`): tabla paginada con filtros por fechas, categoría, motor, origen y
+  lote, todos en la URL. El detalle de cada clasificación está en `/historial/<id>`.
+- **Clasificar:** un texto o un lote CSV de hasta 500 filas, con enlaces al detalle y al lote en
+  el Historial.
+
+Todas las fechas se calculan y se muestran en la hora de Colombia (`America/Bogota`), sin
+importar la zona del navegador.
 
 La arquitectura del proxy y sus reglas están en [AGENTS.md](AGENTS.md).
 
@@ -30,7 +39,12 @@ pnpm start          # sirve el build
 pnpm format         # Prettier
 pnpm gen:api        # regenera src/lib/api/schema.d.ts desde openapi/openapi.json
 pnpm check:api      # falla si los tipos generados no están al día (lo usa la CI)
+pnpm e2e            # Playwright: build de producción contra la API simulada
+pnpm mock-api       # solo la API simulada, en http://127.0.0.1:4010
 ```
+
+`GET /api/health` responde `200 {"status":"ok"}` sin llamar a la API: lo usa el `HEALTHCHECK`
+de la imagen.
 
 ## Variables de entorno
 
@@ -133,6 +147,50 @@ docker run --rm -p 3000:3000 \
 La imagen usa la salida `standalone` y corre con el usuario no root `node`. No contiene
 secretos: se pasan al ejecutarla.
 
+## Pruebas de extremo a extremo (Playwright)
+
+Las mismas especificaciones (`e2e/specs/`) corren en dos modos. En los dos, Playwright compila el
+dashboard (`pnpm build`) y sirve la salida `standalone` en <http://localhost:3100> con
+`ENVIRONMENT=production` y `WEB_TRUSTED_PROXY_HOPS=1`, como en un despliegue. El navegador usa a
+propósito la zona `Europe/Madrid`. Para no recompilar, usa `E2E_SKIP_BUILD=1`.
+
+La primera vez, instala el navegador:
+
+```bash
+pnpm exec playwright install chromium
+```
+
+### Con la API simulada (por defecto; lo usa la CI)
+
+```bash
+pnpm e2e
+```
+
+Playwright levanta también `e2e/mock-api/server.mts`: una API en memoria que sigue
+`openapi/openapi.json` y verifica en cada petición las cabeceras del proxy. Si algo falla,
+responde con el error y la prueba falla. Más detalles en [AGENTS.md](AGENTS.md#api-simulada-del-e2e).
+
+### Contra la API real (manual)
+
+1. Levanta `pqrs-api` (versión con `tz`) con `docker compose up -d` y crea una organización y un
+   usuario con `pqrs-admin`, como en [Entorno local con la API](#entorno-local-con-la-api).
+2. Ejecuta, con las credenciales de ese usuario:
+
+   ```bash
+   E2E_TARGET=real \
+   E2E_EMAIL=ana@ejemplo.gov.co \
+   E2E_PASSWORD='la-clave-del-paso-1' \
+   E2E_ORG_NAME='Alcaldía de ejemplo' \
+   pnpm e2e
+   ```
+
+   `API_BASE_URL` (por defecto `http://localhost:8000`) y `PROXY_SHARED_SECRET` (por defecto el
+   de `docker-compose.yml`) se pueden cambiar con variables de entorno.
+
+En este modo se omiten las pruebas que necesitan la API simulada: la de zona horaria, que siembra
+fechas, y la de sesión expirada. Las pruebas crean clasificaciones reales en la base de datos
+local.
+
 ## CI
 
 GitHub Actions (`.github/workflows/ci.yml`):
@@ -144,3 +202,6 @@ GitHub Actions (`.github/workflows/ci.yml`):
 - `pnpm typecheck`
 - `pnpm test`
 - `pnpm build`
+
+Un job aparte, `e2e`, instala Chromium y ejecuta `pnpm e2e` con la API simulada. Si falla, sube
+el informe de Playwright como artefacto.
