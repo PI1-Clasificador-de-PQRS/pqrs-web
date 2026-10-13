@@ -132,6 +132,61 @@ Next 16 **no expone la IP del socket** a un Route Handler. Además, solo escribe
 | `SESSION_COOKIE_NAME`    | `pqrs_session`                                          |                                                                                                                 |
 | `WEB_TRUSTED_PROXY_HOPS` | `0`                                                     | `1` en Azure.                                                                                                   |
 
+## Zona horaria
+
+- Hay una sola zona: `APP_TIMEZONE = "America/Bogota"`, en `src/lib/time/zone.ts`.
+- Toda llamada a `/classifications` y `/metrics/summary` **envía `tz=APP_TIMEZONE`**. No se
+  confía en el valor por defecto de la API, que es UTC. La consulta se arma en un solo sitio:
+  `toClassificationsQuery` y `toSummaryQuery`.
+- **«Hoy»** es `todayInAppZone()`, nunca `new Date().getDate()`. Los rangos predefinidos salen de
+  ahí. La aritmética de fechas de calendario (`addDays`, `mondayOf`, …) trabaja sobre
+  `YYYY-MM-DD` en UTC, así que no la afectan los cambios de hora.
+- **Formato** (`src/lib/time/format.ts`, `es-CO`):
+  - un instante (`created_at`) se formatea con `formatDateTime`, en `APP_TIMEZONE`;
+  - una fecha de calendario (filtros y `period` de la serie) se formatea con `formatPlainDate`,
+    que la construye a las 12:00 UTC para que no se desplace de día.
+
+## Historial y Métricas
+
+- **Historial:**
+  - el estado vive en la URL, con los nombres de la API (`date_from`, `date_to`, `category`,
+    `model`, `source`, `batch_id`, `page`, `page_size`);
+  - `src/lib/history/filters.ts` lo convierte en los dos sentidos y descarta los valores
+    inválidos;
+  - las fechas invertidas se rechazan antes de llamar a la API;
+  - la tabla usa `placeholderData: keepPreviousData`.
+- **Métricas:**
+  - la URL guarda `period` (`7d`, `30d` por defecto, `month`, `all` o `custom`), `date_from` y
+    `date_to` (solo con `custom`) y `granularity`;
+  - `effectiveGranularity` pasa a semana con más de 400 días por día, y siempre con «todo el
+    historial»;
+  - la tarjeta del total enlaza al Historial con las mismas fechas (criterio E4).
+- **Gráficos** (Recharts, `src/app/(protected)/metricas/components/`):
+  - cada gráfico va dentro de `ChartCard`, con título, resumen para lectores de pantalla y «Ver
+    como tabla»;
+  - el gráfico y la tabla se alimentan de las mismas filas (`ChartRow`, de
+    `src/lib/metrics/summary.ts`);
+  - las barras llevan su valor y los textos usan los tokens del tema.
+- **Colores** (`src/lib/pqrs/category-colors.ts`): uno fijo por categoría, validados en el orden
+  canónico (contraste ≥ 3:1 sobre blanco y separación con daltonismo):
+
+  | Categoría                | Color     |
+  | ------------------------ | --------- |
+  | Petición                 | `#2a78d6` |
+  | Reclamo                  | `#c94f1a` |
+  | Denuncia                 | `#13865d` |
+  | Solicitud de información | `#9a6a00` |
+
+  Las series de un solo color (tiempo, motor y origen) usan el neutro `#475569`.
+
+## Endpoint de salud
+
+`GET /api/health` (`src/app/api/health/route.ts`) responde `200 {"status":"ok"}`:
+
+- no llama a la API ni lee secretos;
+- está fuera de la lista blanca del BFF y del `matcher` de `src/proxy.ts`;
+- lo usa el `HEALTHCHECK` del Dockerfile.
+
 ## Clasificar
 
 - **Motor:** `useEngineSelection` preselecciona una sola vez (el LLM si está disponible; si no,
@@ -160,6 +215,54 @@ La CI ejecuta `pnpm check:api` y falla si `schema.d.ts` no corresponde al spec.
 - Vitest con jsdom, Testing Library y MSW 3 (`onUnhandledFrame: "error"`). Las pruebas del
   proxy usan el entorno `node` y simulan la API en `http://api.test`.
 - El cliente de jsdom habla con `http://localhost:3000/api/proxy`.
+- `src/test/navigation.ts` simula `next/navigation` con una URL en memoria, para probar el estado
+  en la URL.
+
+### E2E (Playwright)
+
+- Configuración en `playwright.config.ts`. Las especificaciones están en `e2e/specs/` y los
+  datos de prueba en `e2e/fixtures/`.
+- `E2E_TARGET`:
+  - `mock`, por defecto y en la CI: levanta la API simulada;
+  - `real`: usa el `docker compose` de `pqrs-api`, con `E2E_EMAIL`, `E2E_PASSWORD` y
+    `E2E_ORG_NAME`. Las credenciales nunca van en el código.
+- Las pruebas que necesitan la API simulada llaman a `test.skip(!isMock)`.
+- El dashboard se prueba con el build `standalone` (`e2e/support/start-web.mjs`), con
+  `ENVIRONMENT=production` y `WEB_TRUSTED_PROXY_HOPS=1`. El navegador usa la zona
+  `Europe/Madrid` a propósito.
+
+### API simulada del E2E
+
+`e2e/mock-api/server.mts` es Node puro: Node 24 ejecuta el TypeScript sin compilar y no tiene
+dependencias. Escucha en el puerto `4010`.
+
+- **Rutas:** las de la lista blanca, bajo `/api/v1`, según `openapi.json`, con los mismos
+  formatos de error. El estado vive en memoria.
+- **Cabeceras:** en cada petición exige:
+  - el `X-PQRS-Proxy-Secret` correcto;
+  - ningún `X-API-Key`;
+  - `X-PQRS-CSRF: 1` en los métodos que modifican datos, salvo el login;
+  - `tz=America/Bogota` en `/classifications` y `/metrics/summary`.
+
+  Cada fallo responde con su error y queda registrado. El fixture automático de
+  `e2e/support/test.ts` reinicia el estado antes de cada prueba y, al terminar, exige que no haya
+  fallos registrados.
+
+- **`tz`** (`e2e/mock-api/tz.mts`): el día local de cada clasificación se calcula con
+  `Intl.DateTimeFormat("en-CA", {timeZone})`. Los filtros comparan días locales y la serie agrupa
+  por día local o por el lunes de la semana, sin huecos. Más de 400 períodos o una zona inválida
+  responden 422. La respuesta devuelve `timezone`.
+- **Datos:**
+  - usuario `e2e@ejemplo.gov.co` con la contraseña `clave-de-prueba-e2e` u otra en
+    `E2E_PASSWORD`; organización «Alcaldía de Prueba E2E»;
+  - el LLM está `not_configured` y el clasificador disponible;
+  - la categoría sale de palabras clave, así que es determinista.
+- **Rutas de control** (solo existen en la API simulada; Playwright las llama directo):
+  - `POST /__test/reset`;
+  - `POST /__test/seed`, con `created_at` arbitrario;
+  - `POST /__test/expire-sessions`, tras la cual las sesiones responden 401 `session_expired`;
+  - `PUT /__test/models`;
+  - `GET /__test/violations`.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

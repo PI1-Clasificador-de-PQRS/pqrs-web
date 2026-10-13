@@ -139,10 +139,9 @@ describe("pestaña Individual", () => {
     const result = await screen.findByRole("region", { name: "Resultado" });
     expect(result).toHaveTextContent("Solicitud de información");
     expect(result).toHaveTextContent("Clasificador local");
-    expect(within(result).getByRole("link", { name: "Ver en el historial" })).toHaveAttribute(
-      "href",
-      "/historial",
-    );
+    expect(
+      within(result).getByRole("link", { name: "Ver el detalle en el historial" }),
+    ).toHaveAttribute("href", "/historial/0b9d6c58-4d6f-4f7e-9d8e-3c1d2e0f9a11");
     expect(body).toEqual({ text: "¿Cuál es el horario?", model: "classifier" });
   });
 

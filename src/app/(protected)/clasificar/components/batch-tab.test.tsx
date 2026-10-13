@@ -71,6 +71,10 @@ describe("pestaña Lote", () => {
       ],
     });
     expect(requests[0]!.batch_id).toMatch(/^[0-9a-f-]{36}$/);
+    expect(screen.getByRole("link", { name: "Ver este lote en el historial" })).toHaveAttribute(
+      "href",
+      `/historial?batch_id=${requests[0]!.batch_id}`,
+    );
 
     await user.click(screen.getByRole("button", { name: "Descargar resultados (CSV)" }));
     const blob = createObjectURL.mock.calls[0]![0];

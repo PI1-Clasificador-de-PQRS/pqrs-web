@@ -11,7 +11,16 @@ const config = [
       "no-console": ["error", { allow: ["warn", "error"] }],
     },
   },
-  { ignores: [".next/**", "node_modules/**", "next-env.d.ts", "src/lib/api/schema.d.ts"] },
+  {
+    ignores: [
+      ".next/**",
+      "node_modules/**",
+      "playwright-report/**",
+      "test-results/**",
+      "next-env.d.ts",
+      "src/lib/api/schema.d.ts",
+    ],
+  },
 ];
 
 export default config;

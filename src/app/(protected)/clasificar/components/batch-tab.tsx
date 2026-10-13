@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useRef, useState } from "react";
+import { TextLink } from "@/components/text-link";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +19,7 @@ import {
 } from "@/lib/batch/batch-machine";
 import { buildResultsCsv, downloadCsv } from "@/lib/batch/csv-export";
 import { MAX_ROWS, parseCsvFile } from "@/lib/batch/csv-parse";
+import { historyHref } from "@/lib/history/filters";
 import { formatCount } from "@/lib/classify/text-rules";
 import { findModel } from "@/lib/models/use-models";
 import { focusEngineSelector } from "./engine-selector";
@@ -229,6 +231,14 @@ export function BatchTab({
               <Button variant="outline" onClick={reset}>
                 Clasificar otro archivo
               </Button>
+            )}
+            {(state.phase === "done" || state.phase === "stopped") && state.batchId && (
+              <TextLink
+                href={historyHref({ batchId: state.batchId })}
+                className="self-center text-sm"
+              >
+                Ver este lote en el historial
+              </TextLink>
             )}
           </div>
 

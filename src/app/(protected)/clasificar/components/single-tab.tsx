@@ -122,10 +122,10 @@ export function SingleTab({
               <dd>{resultModel?.label ?? result.model}</dd>
             </dl>
             <Link
-              href="/historial"
+              href={`/historial/${result.id}`}
               className="mt-3 inline-block text-sm underline underline-offset-4 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
             >
-              Ver en el historial
+              Ver el detalle en el historial
             </Link>
           </section>
         )}
