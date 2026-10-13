@@ -1,8 +1,13 @@
 import type { Metadata } from "next";
-import { ComingSoon } from "@/components/coming-soon";
+import { Suspense } from "react";
+import { MetricsView } from "./components/metrics-view";
 
 export const metadata: Metadata = { title: "Métricas · Clasificador de PQRS" };
 
 export default function MetricsPage() {
-  return <ComingSoon title="Métricas" />;
+  return (
+    <Suspense>
+      <MetricsView />
+    </Suspense>
+  );
 }
