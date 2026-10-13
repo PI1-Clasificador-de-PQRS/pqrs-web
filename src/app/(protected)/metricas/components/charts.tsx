@@ -9,10 +9,12 @@ import {
   LineChart,
   Rectangle,
   ResponsiveContainer,
+  Text,
   Tooltip,
   XAxis,
   YAxis,
   type BarShapeProps,
+  type XAxisTickContentProps,
 } from "recharts";
 import type { ChartRow } from "@/lib/metrics/summary";
 import { NEUTRAL_SERIES_COLOR } from "@/lib/pqrs/category-colors";
@@ -31,6 +33,23 @@ function formatValue(value: unknown): string {
 function RowBar(props: BarShapeProps) {
   const row = props.payload as ChartRow | undefined;
   return <Rectangle {...props} fill={row?.color ?? NEUTRAL_SERIES_COLOR} />;
+}
+
+/** Etiqueta del eje que se parte en varias líneas («Solicitud de información» en móvil). */
+function WrappedTick({ x, y, payload }: XAxisTickContentProps) {
+  return (
+    <Text
+      x={x}
+      y={y}
+      width={72}
+      textAnchor="middle"
+      verticalAnchor="start"
+      fill={AXIS_TICK.fill}
+      fontSize={AXIS_TICK.fontSize}
+    >
+      {String(payload?.value ?? "")}
+    </Text>
+  );
 }
 
 function ChartTooltip() {
@@ -55,7 +74,7 @@ export function ColumnChart({ rows }: { rows: readonly ChartRow[] }) {
     <ResponsiveContainer width="100%" height={280}>
       <BarChart data={[...rows]} margin={{ top: 24, right: 8, bottom: 8, left: 0 }}>
         <CartesianGrid vertical={false} stroke={GRID_STROKE} />
-        <XAxis dataKey="label" tick={AXIS_TICK} tickLine={false} interval={0} />
+        <XAxis dataKey="label" tick={WrappedTick} tickLine={false} interval={0} height={44} />
         <YAxis
           allowDecimals={false}
           tick={AXIS_TICK}
@@ -129,7 +148,7 @@ export function TimeseriesChart({ rows }: { rows: readonly ChartRow[] }) {
         />
         <ChartTooltip />
         <Line
-          type="monotone"
+          type="linear"
           dataKey="value"
           stroke={NEUTRAL_SERIES_COLOR}
           strokeWidth={2}
