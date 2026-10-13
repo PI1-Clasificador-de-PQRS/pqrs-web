@@ -1,0 +1,2697 @@
+{
+  "components": {
+    "schemas": {
+      "BatchItem": {
+        "properties": {
+          "external_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Referencia del sistema que llama: máximo 100 caracteres. Si lo excede, ese elemento devuelve su propio `error` (`invalid_external_ref`) y el resto sigue.",
+            "title": "External Ref"
+          },
+          "text": {
+            "description": "Texto de la PQRS: de 1 a 5.000 caracteres, contados tras quitar los espacios del inicio y del final. El esquema no lo restringe a propósito: un texto vacío o de más de 5.000 caracteres no rechaza el lote con 422; ese elemento devuelve su propio `error` (`invalid_text`) en `results` y el resto se clasifica con normalidad.",
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "BatchItem",
+        "type": "object"
+      },
+      "BatchItemError": {
+        "properties": {
+          "code": {
+            "$ref": "#/components/schemas/ErrorCode"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "BatchItemError",
+        "type": "object"
+      },
+      "BatchItemResult": {
+        "properties": {
+          "category": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Category"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BatchItemError"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Presente solo si este elemento falló; no afecta a los demás."
+          },
+          "id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "index": {
+            "description": "Posición del elemento en `items` (desde 0).",
+            "title": "Index",
+            "type": "integer"
+          },
+          "model_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Version"
+          }
+        },
+        "required": [
+          "index"
+        ],
+        "title": "BatchItemResult",
+        "type": "object"
+      },
+      "BatchRequest": {
+        "properties": {
+          "batch_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Id del lote; si se omite, la API genera uno.",
+            "title": "Batch Id"
+          },
+          "items": {
+            "description": "Entre 1 y 50 elementos. Una lista vacía responde 422 `invalid_request`; más de 50 elementos responde 413 `batch_too_large` (no 422) y no se clasifica ninguno.",
+            "items": {
+              "$ref": "#/components/schemas/BatchItem"
+            },
+            "minItems": 1,
+            "title": "Items",
+            "type": "array"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Engine"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Motor a usar. Si se omite, la API elige el motor predeterminado disponible."
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "BatchRequest",
+        "type": "object"
+      },
+      "BatchResponse": {
+        "properties": {
+          "batch_id": {
+            "format": "uuid",
+            "title": "Batch Id",
+            "type": "string"
+          },
+          "model": {
+            "$ref": "#/components/schemas/Engine"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/BatchItemResult"
+            },
+            "title": "Results",
+            "type": "array"
+          }
+        },
+        "required": [
+          "batch_id",
+          "model",
+          "results"
+        ],
+        "title": "BatchResponse",
+        "type": "object"
+      },
+      "Category": {
+        "description": "Las 4 categorías del MVP, en orden canónico. El valor es la etiqueta con tildes.",
+        "enum": [
+          "Petición",
+          "Reclamo",
+          "Denuncia",
+          "Solicitud de información"
+        ],
+        "title": "Category",
+        "type": "string"
+      },
+      "ClassificationOut": {
+        "properties": {
+          "batch_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Batch Id"
+          },
+          "category": {
+            "$ref": "#/components/schemas/Category"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "external_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Ref"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "model": {
+            "$ref": "#/components/schemas/Engine"
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          },
+          "source": {
+            "$ref": "#/components/schemas/Source"
+          },
+          "text_anonymized": {
+            "title": "Text Anonymized",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "created_at",
+          "text_anonymized",
+          "category",
+          "model",
+          "model_version",
+          "source",
+          "batch_id",
+          "external_ref"
+        ],
+        "title": "ClassificationOut",
+        "type": "object"
+      },
+      "ClassificationPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ClassificationOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "page": {
+            "title": "Page",
+            "type": "integer"
+          },
+          "page_size": {
+            "title": "Page Size",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "ClassificationPage",
+        "type": "object"
+      },
+      "ClassifyRequest": {
+        "properties": {
+          "external_ref": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Referencia del sistema que llama (por ejemplo, su número de radicado).",
+            "title": "External Ref"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Engine"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Motor a usar. Si se omite, la API elige el motor predeterminado disponible."
+          },
+          "text": {
+            "description": "Texto de la PQRS: de 1 a 5.000 caracteres, contados tras quitar los espacios del inicio y del final.",
+            "maxLength": 5000,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "ClassifyRequest",
+        "type": "object"
+      },
+      "ClassifyResponse": {
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/Category"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "model": {
+            "$ref": "#/components/schemas/Engine"
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "title": "Timestamp",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "category",
+          "model",
+          "model_version",
+          "timestamp"
+        ],
+        "title": "ClassifyResponse",
+        "type": "object"
+      },
+      "Engine": {
+        "enum": [
+          "llm",
+          "classifier"
+        ],
+        "title": "Engine",
+        "type": "string"
+      },
+      "EngineEvaluation": {
+        "properties": {
+          "f1_macro": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "F1 macro del motor sobre su conjunto de evaluación. El del clasificador local sale de `metadata.json`; el del LLM, de la configuración (`LLM_EVAL_F1_MACRO`). `null` si no se pudo leer.",
+            "title": "F1 Macro"
+          }
+        },
+        "required": [
+          "f1_macro"
+        ],
+        "title": "EngineEvaluation",
+        "type": "object"
+      },
+      "ErrorCode": {
+        "description": "Códigos de error estables del contrato público.",
+        "enum": [
+          "missing_credentials",
+          "invalid_credentials",
+          "session_expired",
+          "session_required",
+          "csrf_required",
+          "proxy_required",
+          "not_found",
+          "method_not_allowed",
+          "batch_too_large",
+          "payload_too_large",
+          "invalid_request",
+          "invalid_text",
+          "invalid_external_ref",
+          "too_many_attempts",
+          "rate_limited",
+          "llm_unavailable",
+          "classifier_unavailable",
+          "database_unavailable",
+          "internal_error"
+        ],
+        "title": "ErrorCode",
+        "type": "string"
+      },
+      "ErrorDetail": {
+        "properties": {
+          "code": {
+            "$ref": "#/components/schemas/ErrorCode",
+            "description": "Código estable del error; úsalo para la lógica del cliente."
+          },
+          "message": {
+            "description": "Mensaje en español, apto para mostrar al usuario.",
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ErrorDetail",
+        "type": "object"
+      },
+      "ErrorResponse": {
+        "description": "Formato único de error de la API.",
+        "properties": {
+          "detail": {
+            "$ref": "#/components/schemas/ErrorDetail"
+          }
+        },
+        "required": [
+          "detail"
+        ],
+        "title": "ErrorResponse",
+        "type": "object"
+      },
+      "EvaluationSummary": {
+        "properties": {
+          "classifier": {
+            "$ref": "#/components/schemas/EngineEvaluation"
+          },
+          "llm": {
+            "$ref": "#/components/schemas/EngineEvaluation"
+          }
+        },
+        "required": [
+          "llm",
+          "classifier"
+        ],
+        "title": "EvaluationSummary",
+        "type": "object"
+      },
+      "Granularity": {
+        "enum": [
+          "day",
+          "week"
+        ],
+        "title": "Granularity",
+        "type": "string"
+      },
+      "LoginRequest": {
+        "properties": {
+          "email": {
+            "description": "Correo del usuario (sin distinguir mayúsculas).",
+            "maxLength": 320,
+            "title": "Email",
+            "type": "string"
+          },
+          "password": {
+            "description": "Contraseña del usuario.",
+            "maxLength": 1024,
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "LoginRequest",
+        "type": "object"
+      },
+      "MeResponse": {
+        "properties": {
+          "organization": {
+            "$ref": "#/components/schemas/OrganizationOut"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserOut"
+          }
+        },
+        "required": [
+          "user",
+          "organization"
+        ],
+        "title": "MeResponse",
+        "type": "object"
+      },
+      "MetricsSummary": {
+        "properties": {
+          "by_category": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "Conteo por categoría.",
+            "propertyNames": {
+              "$ref": "#/components/schemas/Category"
+            },
+            "title": "By Category",
+            "type": "object"
+          },
+          "by_model": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "Conteo por motor.",
+            "propertyNames": {
+              "$ref": "#/components/schemas/Engine"
+            },
+            "title": "By Model",
+            "type": "object"
+          },
+          "by_source": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "Conteo por origen.",
+            "propertyNames": {
+              "$ref": "#/components/schemas/Source"
+            },
+            "title": "By Source",
+            "type": "object"
+          },
+          "evaluation": {
+            "$ref": "#/components/schemas/EvaluationSummary"
+          },
+          "timeseries": {
+            "items": {
+              "$ref": "#/components/schemas/TimeseriesPoint"
+            },
+            "title": "Timeseries",
+            "type": "array"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "by_category",
+          "by_model",
+          "by_source",
+          "timeseries",
+          "evaluation"
+        ],
+        "title": "MetricsSummary",
+        "type": "object"
+      },
+      "ModelInfo": {
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "evaluation": {
+            "$ref": "#/components/schemas/EngineEvaluation"
+          },
+          "id": {
+            "$ref": "#/components/schemas/Engine"
+          },
+          "label": {
+            "description": "Nombre para mostrar en la interfaz.",
+            "title": "Label",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UnavailableReason"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Por qué no está disponible; `null` si lo está."
+          },
+          "retry_after": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Segundos tras los cuales reintentar (solo si `temporarily_unavailable`).",
+            "title": "Retry After"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "available",
+          "reason",
+          "retry_after",
+          "evaluation"
+        ],
+        "title": "ModelInfo",
+        "type": "object"
+      },
+      "OrganizationOut": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "OrganizationOut",
+        "type": "object"
+      },
+      "Source": {
+        "enum": [
+          "ui",
+          "ui_batch",
+          "api"
+        ],
+        "title": "Source",
+        "type": "string"
+      },
+      "StatusResponse": {
+        "properties": {
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "StatusResponse",
+        "type": "object"
+      },
+      "TimeseriesPoint": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "period": {
+            "description": "Fecha de inicio del periodo (día o lunes de la semana).",
+            "format": "date",
+            "title": "Period",
+            "type": "string"
+          }
+        },
+        "required": [
+          "period",
+          "count"
+        ],
+        "title": "TimeseriesPoint",
+        "type": "object"
+      },
+      "UnavailableReason": {
+        "enum": [
+          "not_configured",
+          "temporarily_unavailable",
+          "not_loaded"
+        ],
+        "title": "UnavailableReason",
+        "type": "string"
+      },
+      "UserOut": {
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "name"
+        ],
+        "title": "UserOut",
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "description": "Clave de un sistema externo (`pqrs_...`). Solo permite clasificar.",
+        "in": "header",
+        "name": "X-API-Key",
+        "type": "apiKey"
+      },
+      "SessionCookie": {
+        "description": "Sesión de usuario. El dashboard (BFF) reenvía la cookie a la API.",
+        "in": "cookie",
+        "name": "pqrs_session",
+        "type": "apiKey"
+      }
+    }
+  },
+  "info": {
+    "description": "API del MVP del Clasificador automático de PQRS (Petición, Reclamo, Denuncia, Solicitud de información).\n\n## Credenciales\n\n* **Sesión (personas):** cookie `HttpOnly` que fija `POST /auth/login`. El navegador solo habla con el dashboard (Next.js), que actúa como proxy y reenvía la cookie a esta API.\n* **API key (sistemas externos):** cabecera `X-API-Key`. Una API key **solo puede clasificar** (`/models`, `/classify`, `/classify/batch`); historial, métricas y `/me` exigen sesión.\n* **CSRF:** las peticiones POST, PUT, PATCH y DELETE autenticadas con cookie deben llevar la cabecera `X-PQRS-CSRF: 1` (la añade el proxy del dashboard). El login y las peticiones con API key están exentos.\n* **Proxy de confianza:** la API es pública, así que el login, el logout y toda petición autenticada con la cookie exigen además `X-PQRS-Proxy-Secret` (el secreto compartido con el dashboard); sin un secreto válido responden 403 `proxy_required`. El proxy envía también la IP del navegador en `X-PQRS-Client-IP` (solo se usa con un secreto válido). Las peticiones con `X-API-Key` no pasan por el proxy, y el proxy **no** debe reenviar `X-API-Key` desde el navegador.\n\n## Límites\n\n* **Tamaño del cuerpo:** `MAX_BODY_BYTES` (1 MiB por defecto); más responde 413 `payload_too_large`.\n* **Solicitudes** a `/models`, `/classify` y `/classify/batch`: por minuto y por API key o por usuario (nunca por IP); al superarlo, 429 `rate_limited` con `Retry-After`.\n* **Login:** intentos fallidos limitados por (correo, IP), por IP y por correo; 429 `too_many_attempts` con `Retry-After`.\n\nToda credencial se resuelve en una organización; un recurso de otra organización responde 404.\n\n## Errores\n\nTodos los errores tienen la forma `{\"detail\": {\"code\": \"<código_estable>\", \"message\": \"<texto>\"}}`.\n\n| HTTP | Códigos |\n|---|---|\n| 401 | `missing_credentials`, `invalid_credentials`, `session_expired`, `session_required` |\n| 403 | `csrf_required`, `proxy_required` |\n| 404 | `not_found` |\n| 413 | `batch_too_large`, `payload_too_large` |\n| 422 | `invalid_request` (en un lote, por elemento: `invalid_text`, `invalid_external_ref`) |\n| 429 | `too_many_attempts`, `rate_limited` |\n| 503 | `llm_unavailable`, `classifier_unavailable` |\n",
+    "summary": "API del Clasificador automático de PQRS",
+    "title": "pqrs-api",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/auth/login": {
+      "post": {
+        "description": "Valida las credenciales y fija la cookie de sesión (`HttpOnly`, `SameSite=Lax`).\n\nCualquier fallo (contraseña incorrecta, usuario inexistente o inactivo, organización\ninactiva) responde igual: 401 `invalid_credentials`. No exige `X-PQRS-CSRF`, pero sí el\nsecreto del proxy (`X-PQRS-Proxy-Secret`): sin él, 403 `proxy_required`. La IP del navegador\n(`X-PQRS-Client-IP`) alimenta el límite de intentos.",
+        "operationId": "login_api_v1_auth_login_post",
+        "parameters": [
+          {
+            "description": "Secreto compartido con el proxy del dashboard (`PROXY_SHARED_SECRET`). Es obligatorio en el login, el logout y toda petición autenticada con la cookie de sesión; sin un secreto válido la respuesta es 403 `proxy_required`. No se exige con `X-API-Key`.",
+            "in": "header",
+            "name": "X-PQRS-Proxy-Secret",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Secreto compartido con el proxy del dashboard (`PROXY_SHARED_SECRET`). Es obligatorio en el login, el logout y toda petición autenticada con la cookie de sesión; sin un secreto válido la respuesta es 403 `proxy_required`. No se exige con `X-API-Key`.",
+              "title": "X-Pqrs-Proxy-Secret"
+            }
+          },
+          {
+            "description": "IP del navegador que el proxy del dashboard reenvía. Solo se usa si `X-PQRS-Proxy-Secret` es válido; si no, la IP se deduce de `X-Forwarded-For` según `TRUSTED_PROXY_HOPS`. Alimenta el límite de intentos de login.",
+            "in": "header",
+            "name": "X-PQRS-Client-IP",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "IP del navegador que el proxy del dashboard reenvía. Solo se usa si `X-PQRS-Proxy-Secret` es válido; si no, la IP se deduce de `X-Forwarded-For` según `TRUSTED_PROXY_HOPS`. Alimenta el límite de intentos de login.",
+              "title": "X-Pqrs-Client-Ip"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid_credentials": {
+                    "value": {
+                      "detail": {
+                        "code": "invalid_credentials",
+                        "message": "Credenciales inválidas."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `invalid_credentials`"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "proxy_required": {
+                    "value": {
+                      "detail": {
+                        "code": "proxy_required",
+                        "message": "Esta petición debe llegar a través del proxy del dashboard."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `proxy_required`"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid_request": {
+                    "value": {
+                      "detail": {
+                        "code": "invalid_request",
+                        "message": "La solicitud no es válida."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `invalid_request`"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "too_many_attempts": {
+                    "value": {
+                      "detail": {
+                        "code": "too_many_attempts",
+                        "message": "Demasiados intentos. Inténtalo de nuevo más tarde."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `too_many_attempts`"
+          }
+        },
+        "summary": "Iniciar sesión",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "description": "Borra la sesión del servidor y la cookie.",
+        "operationId": "logout_api_v1_auth_logout_post",
+        "parameters": [
+          {
+            "description": "Secreto compartido con el proxy del dashboard (`PROXY_SHARED_SECRET`). Es obligatorio en el login, el logout y toda petición autenticada con la cookie de sesión; sin un secreto válido la respuesta es 403 `proxy_required`. No se exige con `X-API-Key`.",
+            "in": "header",
+            "name": "X-PQRS-Proxy-Secret",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Secreto compartido con el proxy del dashboard (`PROXY_SHARED_SECRET`). Es obligatorio en el login, el logout y toda petición autenticada con la cookie de sesión; sin un secreto válido la respuesta es 403 `proxy_required`. No se exige con `X-API-Key`.",
+              "title": "X-Pqrs-Proxy-Secret"
+            }
+          },
+          {
+            "description": "IP del navegador que el proxy del dashboard reenvía. Solo se usa si `X-PQRS-Proxy-Secret` es válido; si no, la IP se deduce de `X-Forwarded-For` según `TRUSTED_PROXY_HOPS`. Alimenta el límite de intentos de login.",
+            "in": "header",
+            "name": "X-PQRS-Client-IP",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "IP del navegador que el proxy del dashboard reenvía. Solo se usa si `X-PQRS-Proxy-Secret` es válido; si no, la IP se deduce de `X-Forwarded-For` según `TRUSTED_PROXY_HOPS`. Alimenta el límite de intentos de login.",
+              "title": "X-Pqrs-Client-Ip"
+            }
+          },
+          {
+            "description": "Defensa en profundidad contra CSRF. Debe valer `1` en las peticiones POST, PUT, PATCH y DELETE autenticadas con la cookie de sesión (lo añade el proxy del dashboard). No se exige con `X-API-Key` ni en el login.",
+            "in": "header",
+            "name": "X-PQRS-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Defensa en profundidad contra CSRF. Debe valer `1` en las peticiones POST, PUT, PATCH y DELETE autenticadas con la cookie de sesión (lo añade el proxy del dashboard). No se exige con `X-API-Key` ni en el login.",
+              "title": "X-Pqrs-Csrf"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "missing_credentials": {
+                    "value": {
+                      "detail": {
+                        "code": "missing_credentials",
+                        "message": "Se requieren credenciales: inicia sesión o envía X-API-Key."
+                      }
+                    }
+                  },
+                  "session_expired": {
+                    "value": {
+                      "detail": {
+                        "code": "session_expired",
+                        "message": "La sesión expiró. Inicia sesión de nuevo."
+                      }
+                    }
+                  },
+                  "session_required": {
+                    "value": {
+                      "detail": {
+                        "code": "session_required",
+                        "message": "Este recurso requiere una sesión de usuario, no una API key."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `missing_credentials`, `session_expired`, `session_required`"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "csrf_required": {
+                    "value": {
+                      "detail": {
+                        "code": "csrf_required",
+                        "message": "Falta la cabecera X-PQRS-CSRF: 1 en una petición que modifica datos."
+                      }
+                    }
+                  },
+                  "proxy_required": {
+                    "value": {
+                      "detail": {
+                        "code": "proxy_required",
+                        "message": "Esta petición debe llegar a través del proxy del dashboard."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `proxy_required`, `csrf_required`"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid_request": {
+                    "value": {
+                      "detail": {
+                        "code": "invalid_request",
+                        "message": "La solicitud no es válida."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `invalid_request`"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Cerrar sesión",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/classifications": {
+      "get": {
+        "description": "Historial paginado de la organización de la sesión, del más reciente al más antiguo.\n\nLos filtros se combinan con AND. `total` es el número de clasificaciones que cumplen los\nfiltros (no solo las de la página), igual que el `total` de `GET /metrics/summary` con las\nmismas fechas. Requiere sesión (una API key no sirve).",
+        "operationId": "list_classifications_api_v1_classifications_get",
+        "parameters": [
+          {
+            "description": "Desde esta fecha (UTC), inclusive. Formato YYYY-MM-DD.",
+            "in": "query",
+            "name": "date_from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Desde esta fecha (UTC), inclusive. Formato YYYY-MM-DD.",
+              "title": "Date From"
+            }
+          },
+          {
+            "description": "Hasta esta fecha (UTC), inclusive. Formato YYYY-MM-DD.",
+            "in": "query",
+            "name": "date_to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Hasta esta fecha (UTC), inclusive. Formato YYYY-MM-DD.",
+              "title": "Date To"
+            }
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Category"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          },
+          {
+            "in": "query",
+            "name": "model",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Engine"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Model"
+            }
+          },
+          {
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Source"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source"
+            }
+          },
+          {
+            "in": "query",
+            "name": "batch_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Batch Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Defensa en profundidad contra CSRF. Debe valer `1` en las peticiones POST, PUT, PATCH y DELETE autenticadas con la cookie de sesión (lo añade el proxy del dashboard). No se exige con `X-API-Key` ni en el login.",
+            "in": "header",
+            "name": "X-PQRS-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Defensa en profundidad contra CSRF. Debe valer `1` en las peticiones POST, PUT, PATCH y DELETE autenticadas con la cookie de sesión (lo añade el proxy del dashboard). No se exige con `X-API-Key` ni en el login.",
+              "title": "X-Pqrs-Csrf"
+            }
+          },
+          {
+            "description": "Secreto compartido con el proxy del dashboard (`PROXY_SHARED_SECRET`). Es obligatorio en el login, el logout y toda petición autenticada con la cookie de sesión; sin un secreto válido la respuesta es 403 `proxy_required`. No se exige con `X-API-Key`.",
+            "in": "header",
+            "name": "X-PQRS-Proxy-Secret",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Secreto compartido con el proxy del dashboard (`PROXY_SHARED_SECRET`). Es obligatorio en el login, el logout y toda petición autenticada con la cookie de sesión; sin un secreto válido la respuesta es 403 `proxy_required`. No se exige con `X-API-Key`.",
+              "title": "X-Pqrs-Proxy-Secret"
+            }
+          },
+          {
+            "description": "IP del navegador que el proxy del dashboard reenvía. Solo se usa si `X-PQRS-Proxy-Secret` es válido; si no, la IP se deduce de `X-Forwarded-For` según `TRUSTED_PROXY_HOPS`. Alimenta el límite de intentos de login.",
+            "in": "header",
+            "name": "X-PQRS-Client-IP",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "IP del navegador que el proxy del dashboard reenvía. Solo se usa si `X-PQRS-Proxy-Secret` es válido; si no, la IP se deduce de `X-Forwarded-For` según `TRUSTED_PROXY_HOPS`. Alimenta el límite de intentos de login.",
+              "title": "X-Pqrs-Client-Ip"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassificationPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid_credentials": {
+                    "value": {
+                      "detail": {
+                        "code": "invalid_credentials",
+                        "message": "Credenciales inválidas."
+                      }
+                    }
+                  },
+                  "missing_credentials": {
+                    "value": {
+                      "detail": {
+                        "code": "missing_credentials",
+                        "message": "Se requieren credenciales: inicia sesión o envía X-API-Key."
+                      }
+                    }
+                  },
+                  "session_expired": {
+                    "value": {
+                      "detail": {
+                        "code": "session_expired",
+                        "message": "La sesión expiró. Inicia sesión de nuevo."
+                      }
+                    }
+                  },
+                  "session_required": {
+                    "value": {
+                      "detail": {
+                        "code": "session_required",
+                        "message": "Este recurso requiere una sesión de usuario, no una API key."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `missing_credentials`, `invalid_credentials`, `session_expired`, `session_required`"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "proxy_required": {
+                    "value": {
+                      "detail": {
+                        "code": "proxy_required",
+                        "message": "Esta petición debe llegar a través del proxy del dashboard."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `proxy_required`"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid_request": {
+                    "value": {
+                      "detail": {
+                        "code": "invalid_request",
+                        "message": "La solicitud no es válida."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `invalid_request`"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Historial de clasificaciones",
+        "tags": [
+          "history"
+        ]
+      }
+    },
+    "/api/v1/classifications/{classification_id}": {
+      "get": {
+        "description": "Una clasificación de la organización de la sesión; la de otra organización da 404.",
+        "operationId": "get_classification_api_v1_classifications__classification_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "classification_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Classification Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Defensa en profundidad contra CSRF. Debe valer `1` en las peticiones POST, PUT, PATCH y DELETE autenticadas con la cookie de sesión (lo añade el proxy del dashboard). No se exige con `X-API-Key` ni en el login.",
+            "in": "header",
+            "name": "X-PQRS-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Defensa en profundidad contra CSRF. Debe valer `1` en las peticiones POST, PUT, PATCH y DELETE autenticadas con la cookie de sesión (lo añade el proxy del dashboard). No se exige con `X-API-Key` ni en el login.",
+              "title": "X-Pqrs-Csrf"
+            }
+          },
+          {
+            "description": "Secreto compartido con el proxy del dashboard (`PROXY_SHARED_SECRET`). Es obligatorio en el login, el logout y toda petición autenticada con la cookie de sesión; sin un secreto válido la respuesta es 403 `proxy_required`. No se exige con `X-API-Key`.",
+            "in": "header",
+            "name": "X-PQRS-Proxy-Secret",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Secreto compartido con el proxy del dashboard (`PROXY_SHARED_SECRET`). Es obligatorio en el login, el logout y toda petición autenticada con la cookie de sesión; sin un secreto válido la respuesta es 403 `proxy_required`. No se exige con `X-API-Key`.",
+              "title": "X-Pqrs-Proxy-Secret"
+            }
+          },
+          {
+            "description": "IP del navegador que el proxy del dashboard reenvía. Solo se usa si `X-PQRS-Proxy-Secret` es válido; si no, la IP se deduce de `X-Forwarded-For` según `TRUSTED_PROXY_HOPS`. Alimenta el límite de intentos de login.",
+            "in": "header",
+            "name": "X-PQRS-Client-IP",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "IP del navegador que el proxy del dashboard reenvía. Solo se usa si `X-PQRS-Proxy-Secret` es válido; si no, la IP se deduce de `X-Forwarded-For` según `TRUSTED_PROXY_HOPS`. Alimenta el límite de intentos de login.",
+              "title": "X-Pqrs-Client-Ip"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassificationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid_credentials": {
+                    "value": {
+                      "detail": {
+                        "code": "invalid_credentials",
+                        "message": "Credenciales inválidas."
+                      }
+                    }
+                  },
+                  "missing_credentials": {
+                    "value": {
+                      "detail": {
+                        "code": "missing_credentials",
+                        "message": "Se requieren credenciales: inicia sesión o envía X-API-Key."
+                      }
+                    }
+                  },
+                  "session_expired": {
+                    "value": {
+                      "detail": {
+                        "code": "session_expired",
+                        "message": "La sesión expiró. Inicia sesión de nuevo."
+                      }
+                    }
+                  },
+                  "session_required": {
+                    "value": {
+                      "detail": {
+                        "code": "session_required",
+                        "message": "Este recurso requiere una sesión de usuario, no una API key."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `missing_credentials`, `invalid_credentials`, `session_expired`, `session_required`"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "proxy_required": {
+                    "value": {
+                      "detail": {
+                        "code": "proxy_required",
+                        "message": "Esta petición debe llegar a través del proxy del dashboard."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `proxy_required`"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "not_found": {
+                    "value": {
+                      "detail": {
+                        "code": "not_found",
+                        "message": "Recurso no encontrado."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `not_found`"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid_request": {
+                    "value": {
+                      "detail": {
+                        "code": "invalid_request",
+                        "message": "La solicitud no es válida."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `invalid_request`"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Detalle de una clasificación",
+        "tags": [
+          "history"
+        ]
+      }
+    },
+    "/api/v1/classify": {
+      "post": {
+        "description": "Clasifica un texto en una de las 4 categorías. No devuelve confianza.\n\nAcepta sesión o API key. El origen que se guarda es `ui` con sesión y `api` con API key.\n\n**Motor.** Si `model` viene, se usa ese motor; si no está disponible o falla, la respuesta es 503\n(`llm_unavailable` o `classifier_unavailable`) y la API **nunca** cambia de motor por su cuenta.\nSi se omite, se usa `llm` cuando está disponible y, si no, `classifier`; esa elección se hace antes\nde clasificar y, si el motor elegido falla después, también es un 503. La respuesta indica el\nmotor usado. Un 503 por circuito abierto trae `Retry-After`.\n\n**Privacidad.** El texto se anonimiza antes de enviarse al motor y de guardarse; el texto original\nno se guarda ni se registra. El LLM solo ve los primeros 1.200 caracteres de cada texto.",
+        "operationId": "classify_api_v1_classify_post",
+        "parameters": [
+          {
+            "description": "Defensa en profundidad contra CSRF. Debe valer `1` en las peticiones POST, PUT, PATCH y DELETE autenticadas con la cookie de sesión (lo añade el proxy del dashboard). No se exige con `X-API-Key` ni en el login.",
+            "in": "header",
+            "name": "X-PQRS-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Defensa en profundidad contra CSRF. Debe valer `1` en las peticiones POST, PUT, PATCH y DELETE autenticadas con la cookie de sesión (lo añade el proxy del dashboard). No se exige con `X-API-Key` ni en el login.",
+              "title": "X-Pqrs-Csrf"
+            }
+          },
+          {
+            "description": "Secreto compartido con el proxy del dashboard (`PROXY_SHARED_SECRET`). Es obligatorio en el login, el logout y toda petición autenticada con la cookie de sesión; sin un secreto válido la respuesta es 403 `proxy_required`. No se exige con `X-API-Key`.",
+            "in": "header",
+            "name": "X-PQRS-Proxy-Secret",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Secreto compartido con el proxy del dashboard (`PROXY_SHARED_SECRET`). Es obligatorio en el login, el logout y toda petición autenticada con la cookie de sesión; sin un secreto válido la respuesta es 403 `proxy_required`. No se exige con `X-API-Key`.",
+              "title": "X-Pqrs-Proxy-Secret"
+            }
+          },
+          {
+            "description": "IP del navegador que el proxy del dashboard reenvía. Solo se usa si `X-PQRS-Proxy-Secret` es válido; si no, la IP se deduce de `X-Forwarded-For` según `TRUSTED_PROXY_HOPS`. Alimenta el límite de intentos de login.",
+            "in": "header",
+            "name": "X-PQRS-Client-IP",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "IP del navegador que el proxy del dashboard reenvía. Solo se usa si `X-PQRS-Proxy-Secret` es válido; si no, la IP se deduce de `X-Forwarded-For` según `TRUSTED_PROXY_HOPS`. Alimenta el límite de intentos de login.",
+              "title": "X-Pqrs-Client-Ip"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClassifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassifyResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid_credentials": {
+                    "value": {
+                      "detail": {
+                        "code": "invalid_credentials",
+                        "message": "Credenciales inválidas."
+                      }
+                    }
+                  },
+                  "missing_credentials": {
+                    "value": {
+                      "detail": {
+                        "code": "missing_credentials",
+                        "message": "Se requieren credenciales: inicia sesión o envía X-API-Key."
+                      }
+                    }
+                  },
+                  "session_expired": {
+                    "value": {
+                      "detail": {
+                        "code": "session_expired",
+                        "message": "La sesión expiró. Inicia sesión de nuevo."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `missing_credentials`, `invalid_credentials`, `session_expired`"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "csrf_required": {
+                    "value": {
+                      "detail": {
+                        "code": "csrf_required",
+                        "message": "Falta la cabecera X-PQRS-CSRF: 1 en una petición que modifica datos."
+                      }
+                    }
+                  },
+                  "proxy_required": {
+                    "value": {
+                      "detail": {
+                        "code": "proxy_required",
+                        "message": "Esta petición debe llegar a través del proxy del dashboard."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `csrf_required`, `proxy_required`"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "payload_too_large": {
+                    "value": {
+                      "detail": {
+                        "code": "payload_too_large",
+                        "message": "El cuerpo de la petición supera el tamaño máximo permitido."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `payload_too_large`"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid_request": {
+                    "value": {
+                      "detail": {
+                        "code": "invalid_request",
+                        "message": "La solicitud no es válida."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `invalid_request`"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "rate_limited": {
+                    "value": {
+                      "detail": {
+                        "code": "rate_limited",
+                        "message": "Se superó el límite de solicitudes. Inténtalo de nuevo más tarde."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `rate_limited`"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "classifier_unavailable": {
+                    "value": {
+                      "detail": {
+                        "code": "classifier_unavailable",
+                        "message": "El clasificador local no está disponible."
+                      }
+                    }
+                  },
+                  "llm_unavailable": {
+                    "value": {
+                      "detail": {
+                        "code": "llm_unavailable",
+                        "message": "El motor LLM no está disponible temporalmente."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `llm_unavailable`, `classifier_unavailable`"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "Clasificar una PQRS",
+        "tags": [
+          "classify"
+        ]
+      }
+    },
+    "/api/v1/classify/batch": {
+      "post": {
+        "description": "Clasifica un lote de hasta 50 textos.\n\nLímites:\n\n* **Máximo 50 elementos** en `items`; más de 50 responde 413 `batch_too_large` y no se\n  clasifica ninguno. Una lista vacía responde 422 `invalid_request`.\n* **Cada texto: de 1 a 5.000 caracteres** (tras quitar espacios de los extremos). Un elemento\n  que no cumple devuelve su propio `error` (`invalid_text`) en `results` sin detener el resto.\n* **`external_ref`: máximo 100 caracteres**; si lo excede, el elemento devuelve\n  `invalid_external_ref`.\n\nLos elementos válidos se anonimizan y se clasifican en **una sola llamada** al motor. Si el\nmotor falla, la respuesta es 503 para todo el bloque y no se guarda nada de él. El dashboard\nenvía los lotes grandes en bloques de 50 con el mismo `batch_id` y se detiene ante un fallo:\nlos bloques anteriores ya guardados se conservan.\n\n`batch_id` se toma de la petición si viene; si no, se genera. El origen que se guarda es\n`ui_batch` con sesión y `api` con API key. La latencia que se guarda de cada elemento es la del\nbloque repartida entre sus elementos válidos.\n\n**Motor.** Si `model` viene, se usa ese motor; si no está disponible o falla, la respuesta es 503\n(`llm_unavailable` o `classifier_unavailable`) y la API **nunca** cambia de motor por su cuenta.\nSi se omite, se usa `llm` cuando está disponible y, si no, `classifier`; esa elección se hace antes\nde clasificar y, si el motor elegido falla después, también es un 503. La respuesta indica el\nmotor usado. Un 503 por circuito abierto trae `Retry-After`.\n\n**Privacidad.** El texto se anonimiza antes de enviarse al motor y de guardarse; el texto original\nno se guarda ni se registra. El LLM solo ve los primeros 1.200 caracteres de cada texto.",
+        "operationId": "classify_batch_api_v1_classify_batch_post",
+        "parameters": [
+          {
+            "description": "Defensa en profundidad contra CSRF. Debe valer `1` en las peticiones POST, PUT, PATCH y DELETE autenticadas con la cookie de sesión (lo añade el proxy del dashboard). No se exige con `X-API-Key` ni en el login.",
+            "in": "header",
+            "name": "X-PQRS-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Defensa en profundidad contra CSRF. Debe valer `1` en las peticiones POST, PUT, PATCH y DELETE autenticadas con la cookie de sesión (lo añade el proxy del dashboard). No se exige con `X-API-Key` ni en el login.",
+              "title": "X-Pqrs-Csrf"
+            }
+          },
+          {
+            "description": "Secreto compartido con el proxy del dashboard (`PROXY_SHARED_SECRET`). Es obligatorio en el login, el logout y toda petición autenticada con la cookie de sesión; sin un secreto válido la respuesta es 403 `proxy_required`. No se exige con `X-API-Key`.",
+            "in": "header",
+            "name": "X-PQRS-Proxy-Secret",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Secreto compartido con el proxy del dashboard (`PROXY_SHARED_SECRET`). Es obligatorio en el login, el logout y toda petición autenticada con la cookie de sesión; sin un secreto válido la respuesta es 403 `proxy_required`. No se exige con `X-API-Key`.",
+              "title": "X-Pqrs-Proxy-Secret"
+            }
+          },
+          {
+            "description": "IP del navegador que el proxy del dashboard reenvía. Solo se usa si `X-PQRS-Proxy-Secret` es válido; si no, la IP se deduce de `X-Forwarded-For` según `TRUSTED_PROXY_HOPS`. Alimenta el límite de intentos de login.",
+            "in": "header",
+            "name": "X-PQRS-Client-IP",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "IP del navegador que el proxy del dashboard reenvía. Solo se usa si `X-PQRS-Proxy-Secret` es válido; si no, la IP se deduce de `X-Forwarded-For` según `TRUSTED_PROXY_HOPS`. Alimenta el límite de intentos de login.",
+              "title": "X-Pqrs-Client-Ip"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid_credentials": {
+                    "value": {
+                      "detail": {
+                        "code": "invalid_credentials",
+                        "message": "Credenciales inválidas."
+                      }
+                    }
+                  },
+                  "missing_credentials": {
+                    "value": {
+                      "detail": {
+                        "code": "missing_credentials",
+                        "message": "Se requieren credenciales: inicia sesión o envía X-API-Key."
+                      }
+                    }
+                  },
+                  "session_expired": {
+                    "value": {
+                      "detail": {
+                        "code": "session_expired",
+                        "message": "La sesión expiró. Inicia sesión de nuevo."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `missing_credentials`, `invalid_credentials`, `session_expired`"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "csrf_required": {
+                    "value": {
+                      "detail": {
+                        "code": "csrf_required",
+                        "message": "Falta la cabecera X-PQRS-CSRF: 1 en una petición que modifica datos."
+                      }
+                    }
+                  },
+                  "proxy_required": {
+                    "value": {
+                      "detail": {
+                        "code": "proxy_required",
+                        "message": "Esta petición debe llegar a través del proxy del dashboard."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `csrf_required`, `proxy_required`"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "batch_too_large": {
+                    "value": {
+                      "detail": {
+                        "code": "batch_too_large",
+                        "message": "El lote supera el máximo de 50 elementos."
+                      }
+                    }
+                  },
+                  "payload_too_large": {
+                    "value": {
+                      "detail": {
+                        "code": "payload_too_large",
+                        "message": "El cuerpo de la petición supera el tamaño máximo permitido."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `payload_too_large`, `batch_too_large`"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid_request": {
+                    "value": {
+                      "detail": {
+                        "code": "invalid_request",
+                        "message": "La solicitud no es válida."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `invalid_request`"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "rate_limited": {
+                    "value": {
+                      "detail": {
+                        "code": "rate_limited",
+                        "message": "Se superó el límite de solicitudes. Inténtalo de nuevo más tarde."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `rate_limited`"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "classifier_unavailable": {
+                    "value": {
+                      "detail": {
+                        "code": "classifier_unavailable",
+                        "message": "El clasificador local no está disponible."
+                      }
+                    }
+                  },
+                  "llm_unavailable": {
+                    "value": {
+                      "detail": {
+                        "code": "llm_unavailable",
+                        "message": "El motor LLM no está disponible temporalmente."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `llm_unavailable`, `classifier_unavailable`"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "Clasificar un lote de PQRS",
+        "tags": [
+          "classify"
+        ]
+      }
+    },
+    "/api/v1/me": {
+      "get": {
+        "description": "Requiere sesión: una API key responde 401 `session_required`.",
+        "operationId": "me_api_v1_me_get",
+        "parameters": [
+          {
+            "description": "Defensa en profundidad contra CSRF. Debe valer `1` en las peticiones POST, PUT, PATCH y DELETE autenticadas con la cookie de sesión (lo añade el proxy del dashboard). No se exige con `X-API-Key` ni en el login.",
+            "in": "header",
+            "name": "X-PQRS-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Defensa en profundidad contra CSRF. Debe valer `1` en las peticiones POST, PUT, PATCH y DELETE autenticadas con la cookie de sesión (lo añade el proxy del dashboard). No se exige con `X-API-Key` ni en el login.",
+              "title": "X-Pqrs-Csrf"
+            }
+          },
+          {
+            "description": "Secreto compartido con el proxy del dashboard (`PROXY_SHARED_SECRET`). Es obligatorio en el login, el logout y toda petición autenticada con la cookie de sesión; sin un secreto válido la respuesta es 403 `proxy_required`. No se exige con `X-API-Key`.",
+            "in": "header",
+            "name": "X-PQRS-Proxy-Secret",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Secreto compartido con el proxy del dashboard (`PROXY_SHARED_SECRET`). Es obligatorio en el login, el logout y toda petición autenticada con la cookie de sesión; sin un secreto válido la respuesta es 403 `proxy_required`. No se exige con `X-API-Key`.",
+              "title": "X-Pqrs-Proxy-Secret"
+            }
+          },
+          {
+            "description": "IP del navegador que el proxy del dashboard reenvía. Solo se usa si `X-PQRS-Proxy-Secret` es válido; si no, la IP se deduce de `X-Forwarded-For` según `TRUSTED_PROXY_HOPS`. Alimenta el límite de intentos de login.",
+            "in": "header",
+            "name": "X-PQRS-Client-IP",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "IP del navegador que el proxy del dashboard reenvía. Solo se usa si `X-PQRS-Proxy-Secret` es válido; si no, la IP se deduce de `X-Forwarded-For` según `TRUSTED_PROXY_HOPS`. Alimenta el límite de intentos de login.",
+              "title": "X-Pqrs-Client-Ip"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "missing_credentials": {
+                    "value": {
+                      "detail": {
+                        "code": "missing_credentials",
+                        "message": "Se requieren credenciales: inicia sesión o envía X-API-Key."
+                      }
+                    }
+                  },
+                  "session_expired": {
+                    "value": {
+                      "detail": {
+                        "code": "session_expired",
+                        "message": "La sesión expiró. Inicia sesión de nuevo."
+                      }
+                    }
+                  },
+                  "session_required": {
+                    "value": {
+                      "detail": {
+                        "code": "session_required",
+                        "message": "Este recurso requiere una sesión de usuario, no una API key."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `missing_credentials`, `session_expired`, `session_required`"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "proxy_required": {
+                    "value": {
+                      "detail": {
+                        "code": "proxy_required",
+                        "message": "Esta petición debe llegar a través del proxy del dashboard."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `proxy_required`"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid_request": {
+                    "value": {
+                      "detail": {
+                        "code": "invalid_request",
+                        "message": "La solicitud no es válida."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `invalid_request`"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Usuario y organización de la sesión",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/metrics/summary": {
+      "get": {
+        "description": "Totales por categoría, motor y origen, serie temporal y F1 macro de cada motor.\n\nRequiere sesión (una API key no sirve). `by_category`, `by_model` y `by_source` traen\n**todas** las claves posibles, también las que valen 0. `total` coincide con el `total` de\n`GET /classifications` con las mismas fechas.\n\n`timeseries` cuenta por día UTC (`day`) o por semana ISO que empieza el lunes (`week`) y no\ntiene huecos: los periodos sin clasificaciones valen 0. Si falta `date_from` o `date_to`, la\nserie empieza o termina en la primera o última clasificación; sin ninguna fecha ni datos queda\nvacía. Un rango de más de 400 periodos responde 422 `invalid_request`.",
+        "operationId": "metrics_summary_api_v1_metrics_summary_get",
+        "parameters": [
+          {
+            "description": "Desde esta fecha (UTC), inclusive. Formato YYYY-MM-DD.",
+            "in": "query",
+            "name": "date_from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Desde esta fecha (UTC), inclusive. Formato YYYY-MM-DD.",
+              "title": "Date From"
+            }
+          },
+          {
+            "description": "Hasta esta fecha (UTC), inclusive. Formato YYYY-MM-DD.",
+            "in": "query",
+            "name": "date_to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Hasta esta fecha (UTC), inclusive. Formato YYYY-MM-DD.",
+              "title": "Date To"
+            }
+          },
+          {
+            "in": "query",
+            "name": "granularity",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Granularity",
+              "default": "day"
+            }
+          },
+          {
+            "description": "Defensa en profundidad contra CSRF. Debe valer `1` en las peticiones POST, PUT, PATCH y DELETE autenticadas con la cookie de sesión (lo añade el proxy del dashboard). No se exige con `X-API-Key` ni en el login.",
+            "in": "header",
+            "name": "X-PQRS-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Defensa en profundidad contra CSRF. Debe valer `1` en las peticiones POST, PUT, PATCH y DELETE autenticadas con la cookie de sesión (lo añade el proxy del dashboard). No se exige con `X-API-Key` ni en el login.",
+              "title": "X-Pqrs-Csrf"
+            }
+          },
+          {
+            "description": "Secreto compartido con el proxy del dashboard (`PROXY_SHARED_SECRET`). Es obligatorio en el login, el logout y toda petición autenticada con la cookie de sesión; sin un secreto válido la respuesta es 403 `proxy_required`. No se exige con `X-API-Key`.",
+            "in": "header",
+            "name": "X-PQRS-Proxy-Secret",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Secreto compartido con el proxy del dashboard (`PROXY_SHARED_SECRET`). Es obligatorio en el login, el logout y toda petición autenticada con la cookie de sesión; sin un secreto válido la respuesta es 403 `proxy_required`. No se exige con `X-API-Key`.",
+              "title": "X-Pqrs-Proxy-Secret"
+            }
+          },
+          {
+            "description": "IP del navegador que el proxy del dashboard reenvía. Solo se usa si `X-PQRS-Proxy-Secret` es válido; si no, la IP se deduce de `X-Forwarded-For` según `TRUSTED_PROXY_HOPS`. Alimenta el límite de intentos de login.",
+            "in": "header",
+            "name": "X-PQRS-Client-IP",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "IP del navegador que el proxy del dashboard reenvía. Solo se usa si `X-PQRS-Proxy-Secret` es válido; si no, la IP se deduce de `X-Forwarded-For` según `TRUSTED_PROXY_HOPS`. Alimenta el límite de intentos de login.",
+              "title": "X-Pqrs-Client-Ip"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricsSummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid_credentials": {
+                    "value": {
+                      "detail": {
+                        "code": "invalid_credentials",
+                        "message": "Credenciales inválidas."
+                      }
+                    }
+                  },
+                  "missing_credentials": {
+                    "value": {
+                      "detail": {
+                        "code": "missing_credentials",
+                        "message": "Se requieren credenciales: inicia sesión o envía X-API-Key."
+                      }
+                    }
+                  },
+                  "session_expired": {
+                    "value": {
+                      "detail": {
+                        "code": "session_expired",
+                        "message": "La sesión expiró. Inicia sesión de nuevo."
+                      }
+                    }
+                  },
+                  "session_required": {
+                    "value": {
+                      "detail": {
+                        "code": "session_required",
+                        "message": "Este recurso requiere una sesión de usuario, no una API key."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `missing_credentials`, `invalid_credentials`, `session_expired`, `session_required`"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "proxy_required": {
+                    "value": {
+                      "detail": {
+                        "code": "proxy_required",
+                        "message": "Esta petición debe llegar a través del proxy del dashboard."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `proxy_required`"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid_request": {
+                    "value": {
+                      "detail": {
+                        "code": "invalid_request",
+                        "message": "La solicitud no es válida."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `invalid_request`"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "summary": "Resumen de métricas",
+        "tags": [
+          "metrics"
+        ]
+      }
+    },
+    "/api/v1/models": {
+      "get": {
+        "description": "Lista los motores (`llm`, `classifier`) con su disponibilidad y su F1 macro.\n\nSi un motor no está disponible, `reason` dice por qué: `not_configured` (el LLM no tiene\nclave o modelo), `temporarily_unavailable` (circuito de protección abierto; `retry_after`\nson los segundos hasta el siguiente intento) o `not_loaded` (el modelo local no cargó).\nAcepta sesión o API key.",
+        "operationId": "list_models_api_v1_models_get",
+        "parameters": [
+          {
+            "description": "Defensa en profundidad contra CSRF. Debe valer `1` en las peticiones POST, PUT, PATCH y DELETE autenticadas con la cookie de sesión (lo añade el proxy del dashboard). No se exige con `X-API-Key` ni en el login.",
+            "in": "header",
+            "name": "X-PQRS-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Defensa en profundidad contra CSRF. Debe valer `1` en las peticiones POST, PUT, PATCH y DELETE autenticadas con la cookie de sesión (lo añade el proxy del dashboard). No se exige con `X-API-Key` ni en el login.",
+              "title": "X-Pqrs-Csrf"
+            }
+          },
+          {
+            "description": "Secreto compartido con el proxy del dashboard (`PROXY_SHARED_SECRET`). Es obligatorio en el login, el logout y toda petición autenticada con la cookie de sesión; sin un secreto válido la respuesta es 403 `proxy_required`. No se exige con `X-API-Key`.",
+            "in": "header",
+            "name": "X-PQRS-Proxy-Secret",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Secreto compartido con el proxy del dashboard (`PROXY_SHARED_SECRET`). Es obligatorio en el login, el logout y toda petición autenticada con la cookie de sesión; sin un secreto válido la respuesta es 403 `proxy_required`. No se exige con `X-API-Key`.",
+              "title": "X-Pqrs-Proxy-Secret"
+            }
+          },
+          {
+            "description": "IP del navegador que el proxy del dashboard reenvía. Solo se usa si `X-PQRS-Proxy-Secret` es válido; si no, la IP se deduce de `X-Forwarded-For` según `TRUSTED_PROXY_HOPS`. Alimenta el límite de intentos de login.",
+            "in": "header",
+            "name": "X-PQRS-Client-IP",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "IP del navegador que el proxy del dashboard reenvía. Solo se usa si `X-PQRS-Proxy-Secret` es válido; si no, la IP se deduce de `X-Forwarded-For` según `TRUSTED_PROXY_HOPS`. Alimenta el límite de intentos de login.",
+              "title": "X-Pqrs-Client-Ip"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ModelInfo"
+                  },
+                  "title": "Response List Models Api V1 Models Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid_credentials": {
+                    "value": {
+                      "detail": {
+                        "code": "invalid_credentials",
+                        "message": "Credenciales inválidas."
+                      }
+                    }
+                  },
+                  "missing_credentials": {
+                    "value": {
+                      "detail": {
+                        "code": "missing_credentials",
+                        "message": "Se requieren credenciales: inicia sesión o envía X-API-Key."
+                      }
+                    }
+                  },
+                  "session_expired": {
+                    "value": {
+                      "detail": {
+                        "code": "session_expired",
+                        "message": "La sesión expiró. Inicia sesión de nuevo."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `missing_credentials`, `invalid_credentials`, `session_expired`"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "proxy_required": {
+                    "value": {
+                      "detail": {
+                        "code": "proxy_required",
+                        "message": "Esta petición debe llegar a través del proxy del dashboard."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `proxy_required`"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid_request": {
+                    "value": {
+                      "detail": {
+                        "code": "invalid_request",
+                        "message": "La solicitud no es válida."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `invalid_request`"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "rate_limited": {
+                    "value": {
+                      "detail": {
+                        "code": "rate_limited",
+                        "message": "Se superó el límite de solicitudes. Inténtalo de nuevo más tarde."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `rate_limited`"
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "Motores de clasificación disponibles",
+        "tags": [
+          "models"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "description": "Indica que el proceso responde. No toca la base de datos.",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Proceso vivo",
+        "tags": [
+          "ops"
+        ]
+      }
+    },
+    "/ready": {
+      "get": {
+        "description": "Comprueba que la base de datos es accesible y que el modelo local está cargado.\n\nEl LLM no cuenta: es opcional y su disponibilidad se consulta en `GET /models`.",
+        "operationId": "ready_ready_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "classifier_unavailable": {
+                    "value": {
+                      "detail": {
+                        "code": "classifier_unavailable",
+                        "message": "El clasificador local no está disponible."
+                      }
+                    }
+                  },
+                  "database_unavailable": {
+                    "value": {
+                      "detail": {
+                        "code": "database_unavailable",
+                        "message": "La base de datos no está disponible."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Códigos posibles: `database_unavailable`, `classifier_unavailable`"
+          }
+        },
+        "summary": "Listo para recibir tráfico",
+        "tags": [
+          "ops"
+        ]
+      }
+    }
+  },
+  "tags": [
+    {
+      "description": "Inicio y cierre de sesión, y datos de la sesión.",
+      "name": "auth"
+    },
+    {
+      "description": "Motores de clasificación disponibles.",
+      "name": "models"
+    },
+    {
+      "description": "Clasificación de PQRS (sesión o API key).",
+      "name": "classify"
+    },
+    {
+      "description": "Historial de clasificaciones (solo sesión).",
+      "name": "history"
+    },
+    {
+      "description": "Métricas agregadas (solo sesión).",
+      "name": "metrics"
+    },
+    {
+      "description": "Sondas de salud para el orquestador.",
+      "name": "ops"
+    }
+  ]
+}
