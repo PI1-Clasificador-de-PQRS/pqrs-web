@@ -61,8 +61,12 @@ export interface paths {
      * @description Historial paginado de la organización de la sesión, del más reciente al más antiguo.
      *
      *     Los filtros se combinan con AND. `total` es el número de clasificaciones que cumplen los
-     *     filtros (no solo las de la página), igual que el `total` de `GET /metrics/summary` con las
-     *     mismas fechas. Requiere sesión (una API key no sirve).
+     *     filtros (no solo las de la página), igual que el `total` de `GET /metrics/summary` con los
+     *     mismos filtros de fecha y la misma `tz`. Requiere sesión (una API key no sirve).
+     *
+     *     Con `tz`, el rango es `[date_from 00:00, date_to + 1 día 00:00)` en esa zona (por defecto,
+     *     UTC). `created_at` se devuelve siempre como instante ISO 8601 con zona; mostrarlo en hora local
+     *     es tarea del cliente.
      */
     get: operations["list_classifications_api_v1_classifications_get"];
     put?: never;
@@ -204,12 +208,15 @@ export interface paths {
      *
      *     Requiere sesión (una API key no sirve). `by_category`, `by_model` y `by_source` traen
      *     **todas** las claves posibles, también las que valen 0. `total` coincide con el `total` de
-     *     `GET /classifications` con las mismas fechas.
+     *     `GET /classifications` con las mismas fechas y la misma `tz`.
      *
-     *     `timeseries` cuenta por día UTC (`day`) o por semana ISO que empieza el lunes (`week`) y no
-     *     tiene huecos: los periodos sin clasificaciones valen 0. Si falta `date_from` o `date_to`, la
-     *     serie empieza o termina en la primera o última clasificación; sin ninguna fecha ni datos queda
-     *     vacía. Un rango de más de 400 periodos responde 422 `invalid_request`.
+     *     Los días de `date_from` y `date_to` y los periodos de la serie se interpretan en la zona `tz`
+     *     (por defecto, UTC; el dashboard envía `America/Bogota`); `timezone` devuelve la zona aplicada.
+     *     `timeseries` cuenta por día local (`day`) o por semana ISO que empieza el lunes local (`week`);
+     *     `period` es la fecha local de inicio. No tiene huecos: los periodos sin clasificaciones valen 0.
+     *     Si falta `date_from` o `date_to`, la serie empieza o termina en el día local de la primera o
+     *     última clasificación; sin ninguna fecha ni datos queda vacía. Un rango de más de 400 periodos
+     *     responde 422 `invalid_request`.
      */
     get: operations["metrics_summary_api_v1_metrics_summary_get"];
     put?: never;
@@ -533,6 +540,12 @@ export interface components {
       evaluation: components["schemas"]["EvaluationSummary"];
       /** Timeseries */
       timeseries: components["schemas"]["TimeseriesPoint"][];
+      /**
+       * Timezone
+       * @description Zona IANA aplicada a los filtros de fecha y a la serie (eco de `tz`).
+       * @example America/Bogota
+       */
+      timezone: string;
       /** Total */
       total: number;
     };
@@ -582,7 +595,7 @@ export interface components {
       /**
        * Period
        * Format: date
-       * @description Fecha de inicio del periodo (día o lunes de la semana).
+       * @description Fecha local (en `tz`) de inicio del periodo: el día o el lunes de la semana.
        */
       period: string;
     };
@@ -732,9 +745,9 @@ export interface operations {
   list_classifications_api_v1_classifications_get: {
     parameters: {
       query?: {
-        /** @description Desde esta fecha (UTC), inclusive. Formato YYYY-MM-DD. */
+        /** @description Desde esta fecha (en `tz`), inclusive. Formato YYYY-MM-DD. */
         date_from?: string | null;
-        /** @description Hasta esta fecha (UTC), inclusive. Formato YYYY-MM-DD. */
+        /** @description Hasta esta fecha (en `tz`), inclusive. Formato YYYY-MM-DD. */
         date_to?: string | null;
         category?: components["schemas"]["Category"] | null;
         model?: components["schemas"]["Engine"] | null;
@@ -742,6 +755,8 @@ export interface operations {
         batch_id?: string | null;
         page?: number;
         page_size?: number;
+        /** @description Zona horaria IANA (por ejemplo, `America/Bogota`) en la que se interpretan los días de `date_from` y `date_to` y los periodos de la serie. Por defecto, `UTC`. El dashboard envía `America/Bogota`. Debe ser un nombre que reconozcan tanto Python como PostgreSQL; si no, responde 422 `invalid_request`. */
+        tz?: string;
       };
       header?: {
         /** @description Defensa en profundidad contra CSRF. Debe valer `1` en las peticiones POST, PUT, PATCH y DELETE autenticadas con la cookie de sesión (lo añade el proxy del dashboard). No se exige con `X-API-Key` ni en el login. */
@@ -1086,11 +1101,13 @@ export interface operations {
   metrics_summary_api_v1_metrics_summary_get: {
     parameters: {
       query?: {
-        /** @description Desde esta fecha (UTC), inclusive. Formato YYYY-MM-DD. */
+        /** @description Desde esta fecha (en `tz`), inclusive. Formato YYYY-MM-DD. */
         date_from?: string | null;
-        /** @description Hasta esta fecha (UTC), inclusive. Formato YYYY-MM-DD. */
+        /** @description Hasta esta fecha (en `tz`), inclusive. Formato YYYY-MM-DD. */
         date_to?: string | null;
         granularity?: components["schemas"]["Granularity"];
+        /** @description Zona horaria IANA (por ejemplo, `America/Bogota`) en la que se interpretan los días de `date_from` y `date_to` y los periodos de la serie. Por defecto, `UTC`. El dashboard envía `America/Bogota`. Debe ser un nombre que reconozcan tanto Python como PostgreSQL; si no, responde 422 `invalid_request`. */
+        tz?: string;
       };
       header?: {
         /** @description Defensa en profundidad contra CSRF. Debe valer `1` en las peticiones POST, PUT, PATCH y DELETE autenticadas con la cookie de sesión (lo añade el proxy del dashboard). No se exige con `X-API-Key` ni en el login. */
