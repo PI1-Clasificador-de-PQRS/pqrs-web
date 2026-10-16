@@ -121,6 +121,8 @@ Next 16 **no expone la IP del socket** a un Route Handler. Además, solo escribe
   `NEXT_PUBLIC_`.
 - `env.ts` importa `server-only` y se valida al arrancar desde `src/instrumentation.ts`.
 - La imagen Docker no contiene secretos: se inyectan al ejecutarla.
+- La imagen se publica en `ghcr.io/pi1-clasificador-de-pqrs/pqrs-web` desde el job `publish` de
+  `ci.yml` (tras `ci` y `e2e`, solo en push a `main` o tag `v*`). Etiquetas en el README.
 
 ## Variables de entorno
 
