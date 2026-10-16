@@ -147,6 +147,22 @@ docker run --rm -p 3000:3000 \
 La imagen usa la salida `standalone` y corre con el usuario no root `node`. No contiene
 secretos: se pasan al ejecutarla.
 
+### Imagen publicada en GHCR
+
+El job `publish` de la CI construye la imagen y la sube a
+`ghcr.io/pi1-clasificador-de-pqrs/pqrs-web` en cada push a `main` y en cada tag `v*`, solo si
+`ci` y `e2e` pasan. Usa el `GITHUB_TOKEN` del workflow (permiso `packages: write`). Solo
+`linux/amd64`.
+
+| Evento        | Etiquetas                        |
+| ------------- | -------------------------------- |
+| Push a `main` | `main`, `latest`, `sha-<commit>` |
+| Tag `v1.2.3`  | `1.2.3`, `1.2`, `sha-<commit>`   |
+
+Para desplegar, fija `sha-<commit>` o una versión, no `latest`. Si el paquete es privado, quien
+lo descarga (por ejemplo Azure Container Apps) necesita un token de GitHub con solo
+`read:packages`.
+
 ## Pruebas de extremo a extremo (Playwright)
 
 Las mismas especificaciones (`e2e/specs/`) corren en dos modos. En los dos, Playwright compila el
@@ -205,3 +221,6 @@ GitHub Actions (`.github/workflows/ci.yml`):
 
 Un job aparte, `e2e`, instala Chromium y ejecuta `pnpm e2e` con la API simulada. Si falla, sube
 el informe de Playwright como artefacto.
+
+El job `publish` corre después de `ci` y `e2e`, solo en push a `main` o en un tag `v*`, y sube la
+imagen a GHCR (ver [Imagen publicada en GHCR](#imagen-publicada-en-ghcr)).
